@@ -1,7 +1,6 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-#include "math.h"
 
 #include "def.h"
 #include "RAW2RGB24.h"
@@ -24,6 +23,18 @@ void help()
 }
 int main(int argc, char* argv[])
 {
+	printf("BYTE = %d\n",sizeof(BYTE));
+	printf("WORD = %d\n",sizeof(WORD));
+	printf("DWORD = %d\n",sizeof(DWORD));
+	printf("LONG = %d\n",sizeof(LONG));	
+	printf("UINT = %d\n",sizeof(UINT));
+	printf("mBITMAPFILE = %d\n",sizeof(mBITMAPFILE));
+	printf("mBITMAPINFO = %d\n",sizeof(mBITMAPINFO));
+	
+	//return 1;
+
+
+
 	if(argc<6)
 	{
 		help();	
@@ -58,17 +69,22 @@ int main(int argc, char* argv[])
 
 	//load RAW file
 	FILE *fp;	
-	printf("%s\n",argv[5]); 
+	printf("Input RAW = %s\n",argv[5]); 
 	fp = fopen(argv[5],"rb");
 	if( fp == NULL )
 	{
 		printf("open file failed!\n");
 		return -1;
 	}
+	printf("Read RAW finish!\n"); 
+
+
 	BYTE RawBuf[size];
 	memset(RawBuf, 0 ,sizeof(RawBuf));
-	memset(RawBuf, 0, n_Width*n_Heigh);
-	long cnt=fread(RawBuf, 1, size, fp); 
+	//memset(RawBuf, 0, n_Width*n_Heigh);
+	LONG cnt = fread(RawBuf, 1, size, fp); 
+	
+
 	if(cnt != size)
 	{
 		printf("Read cnt=%d, size=%d, it's wrong!\n", cnt, size);
@@ -76,6 +92,9 @@ int main(int argc, char* argv[])
 	}
 	fclose(fp);	
 	
+	printf("fread finish cnt=%d!\n", cnt); 
+
+#if 1
 	//RAW1X convert ot RAW8
 	BYTE Raw8Buf[n_Width*n_Heigh];
 	memset(Raw8Buf, 0 ,sizeof(Raw8Buf));
@@ -100,13 +119,15 @@ int main(int argc, char* argv[])
 	BYTE Rgb24Buf[n_Width*n_Heigh*3];
 	memset(Rgb24Buf, 0 ,sizeof(Rgb24Buf));
 	if(RAW2RGB24(GammaBuf, n_Width, n_Heigh, n_Sequecne, Rgb24Buf)!=0)
+	//if(RAW2RGB24(RawBuf, n_Width, n_Heigh, n_Sequecne, Rgb24Buf)!=0)
 	{
 		printf("RAW to RGB24 error!\n");
 		return -1;
 	}
-
+#endif
 	//Save RGB24 to BMP picture
 	if(save_bmp(Rgb24Buf, n_Width, n_Heigh, argv[6])!=0)
+	//if(save_bmp(RawBuf, n_Width, n_Heigh, argv[6])!=0)
 	{
 		printf("Save BMP error!\n");
 		return -1;

@@ -1,12 +1,12 @@
 #include "stdio.h"
 #include "string.h"
-#include "math.h"
 
 #include "BMPOperation.h"
 #include "def.h"
 
-
 #define BYTE_PER_LINE(w,c)	(((((w))*(c)+31)/32)*4)
+
+//save bmp
 int save_bmp(unsigned char* buf,int width, int height, char* filepath)
 {
 	printf("save_bmp\n");
@@ -25,15 +25,35 @@ int save_bmp(unsigned char* buf,int width, int height, char* filepath)
 	int m_nHeight = height;
 	int nByteWidth=BYTE_PER_LINE(m_nWidth,m_nBitCount);
 
-	BITMAPFILEHEADER bm;
-	bm.bfType='M'*256+'B';
-	bm.bfSize=nByteWidth*m_nHeight;
+	mBITMAPFILE bm;
+	bm.bfType=0x4d42; //('M'*256+'B')&0xffff;
+	bm.bfSize=(nByteWidth*m_nHeight)&0xffffffff;
 	bm.bfReserved1=0;
 	bm.bfReserved2=0;
-	bm.bfOffBits=sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER);
-	fwrite(&bm,sizeof(char),sizeof(BITMAPFILEHEADER), bmpfile);		//
-	BITMAPINFOHEADER bmi;
-	bmi.biSize=sizeof(BITMAPINFOHEADER);
+	bm.bfOffBits=sizeof(mBITMAPFILE)+sizeof(mBITMAPINFO);
+	//fwrite(&bm,sizeof(BYTE),sizeof(mBITMAPFILE), bmpfile);
+	BYTE type[2] = {0x42, 0x4d};
+	fwrite(type, 1, 2, bmpfile);
+
+	BYTE size[4];
+	size[0]=(nByteWidth*m_nHeight)&0xff;
+	size[1]=((nByteWidth*m_nHeight)>>8)&0xff;
+	size[2]=((nByteWidth*m_nHeight)>>16)&0xff;
+	size[3]=((nByteWidth*m_nHeight)>>24)&0xff;
+	fwrite(size, 1, 4, bmpfile);
+
+	BYTE reserve[4] = {0 ,0 , 0, 0};
+	fwrite(reserve, 1, 4, bmpfile);
+
+	BYTE bits[4];
+	bits[0]= (sizeof(mBITMAPFILE)+sizeof(mBITMAPINFO)-2)&0xff;
+	bits[1]=((sizeof(mBITMAPFILE)+sizeof(mBITMAPINFO)-2)>>8)&0xff;
+	bits[2]=((sizeof(mBITMAPFILE)+sizeof(mBITMAPINFO)-2)>>16)&0xff;
+	bits[3]=((sizeof(mBITMAPFILE)+sizeof(mBITMAPINFO)-2)>>24)&0xff;
+	fwrite(bits, 1, 4, bmpfile);
+
+	mBITMAPINFO bmi;
+	bmi.biSize=sizeof(mBITMAPINFO);
 	bmi.biWidth=m_nWidth;
 	bmi.biHeight=m_nHeight;
 	bmi.biPlanes=1;
@@ -44,7 +64,7 @@ int save_bmp(unsigned char* buf,int width, int height, char* filepath)
 	bmi.biYPelsPerMeter=0;
 	bmi.biClrUsed=0;
 	bmi.biClrImportant=0;
-	fwrite(&bmi,sizeof(char),sizeof(BITMAPINFOHEADER), bmpfile);	//
+	fwrite(&bmi,sizeof(BYTE),sizeof(mBITMAPINFO), bmpfile);	//
 	//vertical flip
 
 	BYTE *p1,*p2;
@@ -65,6 +85,8 @@ int save_bmp(unsigned char* buf,int width, int height, char* filepath)
 	return 0;
 }
 
+
+//read bmp
 int read_bmp(char* filepath, unsigned char* buf,int width,int height)
 {
 	printf("read_bmp\n");
@@ -73,10 +95,10 @@ int read_bmp(char* filepath, unsigned char* buf,int width,int height)
 		fprintf (stderr, "Could not open file \"%s\".\n", filepath);
 		return -1;
 	}
-	BITMAPFILEHEADER bm;
-	fread(&bm,sizeof(char),sizeof(BITMAPFILEHEADER),bmpfile);
-	BITMAPINFOHEADER bmi;
-	fread(&bmi,sizeof(char),sizeof(BITMAPINFOHEADER),bmpfile);
+	mBITMAPFILE bm;
+	fread(&bm,sizeof(char),sizeof(mBITMAPFILE),bmpfile);
+	mBITMAPINFO bmi;
+	fread(&bmi,sizeof(char),sizeof(mBITMAPINFO),bmpfile);
 	int m_nWidth = bmi.biWidth;
 	width = m_nWidth;
 	int m_nHeight = bmi.biHeight;
